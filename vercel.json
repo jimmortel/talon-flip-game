@@ -1,13 +1,5 @@
 {
-  "functions": {
-    "index.tsx": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "index.tsx"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.js" }
   ]
 }
