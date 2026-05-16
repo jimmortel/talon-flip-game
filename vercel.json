@@ -1,6 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api" }
-  ]
+  "src": "api/index.tsx",
+  "use": "@vercel/node"
 }
-
