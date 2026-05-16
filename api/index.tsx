@@ -1,6 +1,7 @@
 import { Button, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
-import { serveStatic } from 'frog/serve-static'
+import { handle } from 'frog/next' // Ce module remplace serveStatic pour Vercel !
+import { createClient } from '@vercel/kv'
 import { createClient } from '@vercel/kv'
 
 // Connexion isolée et propre à ta base de données Upstash
