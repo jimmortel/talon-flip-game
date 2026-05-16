@@ -1,0 +1,13 @@
+{
+  "name": "talon-flip-game",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@vercel/kv": "^1.0.1",
+    "frog": "^0.15.7",
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
