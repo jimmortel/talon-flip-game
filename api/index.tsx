@@ -125,9 +125,7 @@ app.frame('/', async (c) => {
 })
 
 // Si on visite la page sur un navigateur, on affiche la console de test Frog !
-if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
-  devtools(app, { serveStatic })
-} else {
-  devtools(app, { assetsPath: '/.frog' })
-}
+devtools(app, { assetsPath: '/.frog' })
 
+export const GET = handle(app)
+export const POST = handle(app)
