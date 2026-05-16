@@ -1,10 +1,9 @@
 import { Button, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
-import { handle } from 'frog/next' // Ce module remplace serveStatic pour Vercel !
-import { createClient } from '@vercel/kv'
+import { handle } from 'frog/next'
 import { createClient } from '@vercel/kv'
 
-// Connexion isolée et propre à ta base de données Upstash
+// Connexion Upstash
 const kv = createClient({
   url: process.env.KV_REST_API_URL!,
   token: process.env.KV_REST_API_TOKEN!,
@@ -13,20 +12,19 @@ const kv = createClient({
 export const app = new Frog({
   assetsPath: '/',
   basePath: '/api',
-  title: 'TALON Flip - L'Œuf de la Fortune',
+  title: 'TALON Flip - L\'Œuf de la Fortune',
 })
 
-const TAXE_MAISON = 3.5 // Ta marge de rentabilité sur les gains (3.5%)
-const SOLDE_INITIAL = 500 // Jetons gratuits offerts pour appâter le joueur
+const TAXE_MAISON = 3.5 
+const SOLDE_INITIAL = 500 
 
 app.frame('/', async (c) => {
   const { buttonValue, inputText } = c
-  const fid = c.frameData?.fid || 0 // Identifiant Farcaster unique de l'utilisateur
-  
-  const userKey = `player:${fid}:balance`
-  const bankKey = `house:bank:wallet` // Clef pour suivre tes bénéfices cumulés
+  const fid = c.frameData?.fid || 0 
 
-  // Récupération du solde du joueur
+  const userKey = `player:${fid}:balance`
+  const bankKey = `house:bank:wallet`
+
   let balance = await kv.get<number>(userKey)
   if (balance === null || balance === undefined) {
     balance = SOLDE_INITIAL
@@ -34,12 +32,12 @@ app.frame('/', async (c) => {
   }
 
   let message = "Mise un montant en $TALON, choisis ton camp et tente de doubler ton capital !"
-  let ecran = 'accueil' // accueil, gagne, perdu, erreur
+  let ecran = 'accueil'
   let mise = 0
 
   if (buttonValue === 'bouton_hatch' || buttonValue === 'bouton_crack') {
     const parsedBet = parseInt(inputText || '0', 10)
-    
+
     if (isNaN(parsedBet) || parsedBet <= 0) {
       message = "❌ Tu dois entrer un montant valide supérieur à 0 !"
       ecran = 'erreur'
@@ -48,39 +46,30 @@ app.frame('/', async (c) => {
       ecran = 'erreur'
     } else {
       mise = parsedBet
-      const gagne = Math.random() < 0.5 // 50% de chance pur
+      const gagne = Math.random() < 0.5
 
       if (gagne) {
-        // Logique de gain + prélèvement de ta taxe de 3.5%
         const gainBrut = mise
         const taxe = (gainBrut * TAXE_MAISON) / 100
         const gainNet = Math.floor(gainBrut - taxe)
-        
+
         balance += gainNet
         ecran = 'gagne'
-        message = `🎉 L'œuf a ÉCLOS ! Tu gagnes ${gainNet} $TALON (Taxe maison de ${TAXE_MAISON}% déduite).`
-        
-        // Ajout de la taxe dans ta caisse d'administration
+        message = `🐣 L'œuf a ÉCLOS ! Tu gagnes ${gainNet} $TALON (Taxe maison de ${TAXE_MAISON}% déduite).`
         await kv.incrby(bankKey, Math.floor(taxe))
       } else {
-        // Logique de perte : la mise va à 100% dans ta poche
         balance -= mise
         ecran = 'perdu'
-        message = `💥 L'œuf s'est FÊLÉ... Tu perds ta mise de ${mise} $TALON.`
-        
-        // La banque récupère la mise perdue
+        message = `🔥 L'œuf s'est FÊLÉ... Tu perds ta mise de ${mise} $TALON.`
         await kv.incrby(bankKey, mise)
       }
-      
-      // Sauvegarde du solde joueur mis à jour
       await kv.set(userKey, balance)
     }
   }
 
-  // Design des visuels de l'œuf (Liens d'images fixes)
-  let imageOeuf = 'https://i.imgur.com/8Yv9XbK.png' // L'œuf normal au centre
-  if (ecran === 'gagne') imageOeuf = 'https://i.imgur.com/wM2Xg8e.png' // L'œuf qui éclot
-  if (ecran === 'perdu') imageOeuf = 'https://i.imgur.com/XqK2XbK.png' // L'œuf brisé
+  let imageOeuf = 'https://i.imgur.com/8YV9XbK.png'
+  if (ecran === 'gagne') imageOeuf = 'https://i.imgur.com/vM2Kg8e.png'
+  if (ecran === 'perdu') imageOeuf = 'https://i.imgur.com/XqK2XbE.png'
 
   return c.res({
     image: (
@@ -95,22 +84,17 @@ app.frame('/', async (c) => {
         height: '100%',
         fontFamily: 'sans-serif',
       }}>
-        {/* Header avec les jetons */}
         <div style={{ display: 'flex', justifyContent: 'space-between', width: '90%', position: 'absolute', top: '40px', fontSize: '24px' }}>
-          <span style={{ color: '#b5b7da' }}>🎰 TALON FLIP</span>
+          <span style={{ color: '#b5b7da' }}>🥚 TALON FLIP</span>
           <span style={{ color: '#ffd700', fontWeight: 'bold' }}>💰 Solde: {balance} $TALON</span>
         </div>
-
-        {/* Œuf Graphique */}
         <img src={imageOeuf} style={{ width: '240px', height: '240px', marginBottom: '30px', borderRadius: '20px' }} alt="Egg State" />
-
-        {/* Message dynamique textuel */}
-        <div style={{ 
-          fontSize: '30px', 
-          textAlign: 'center', 
-          maxWidth: '85%', 
+        <div style={{
+          fontSize: '30px',
+          textAlign: 'center',
+          maxWidth: '85%',
           fontWeight: '600',
-          color: ecran === 'gagne' ? '#00ff87' : ecran === 'perdu' ? '#ff3366' : 'white'
+          color: ecran === 'gagne' ? '#00FF87' : ecran === 'perdu' ? '#FF3366' : 'white'
         }}>
           {message}
         </div>
@@ -119,12 +103,11 @@ app.frame('/', async (c) => {
     intents: [
       <TextInput placeholder="Mise (Ex: 50, 100, 500)..." />,
       <Button value="bouton_hatch">🥚 Parier Éclosion</Button>,
-      <Button value="bouton_crack">⚡ Parier Fêlure</Button>
+      <Button value="bouton_crack">⚡ Parier Félure</Button>,
     ]
   })
 })
 
-// Si on visite la page sur un navigateur, on affiche la console de test Frog !
 devtools(app, { assetsPath: '/.frog' })
 
 export const GET = handle(app)
