@@ -1,4 +1,8 @@
 {
-  "src": "api/index.tsx",
-  "use": "@vercel/node"
+  "builds": [
+    {
+      "src": "api/index.tsx",
+      "use": "@vercel/node"
+    }
+  ]
 }
